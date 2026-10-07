@@ -4,6 +4,7 @@ import { sections } from "@/components/site/MySacMenu";
 import { useProfilePhoto } from "@/lib/profile-photo";
 import { useHasCommunityProfile } from "@/lib/community-profile";
 import { openAccountEditProfile } from "@/components/site/AccountEditProfile";
+import { openAccountInformation } from "@/components/site/AccountInformation";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/my-sac")({
@@ -62,7 +63,7 @@ function MySacPage() {
                     <ChevronRight className="h-4 w-4 opacity-40" />
                   </Link>
                 ) : (
-                  <button key={r.label} type="button" className={rowCls}>
+                  <button key={r.label} type="button" onClick={r.accountInfo ? openAccountInformation : undefined} className={rowCls}>
                     {r.label}
                     <ChevronRight className="h-4 w-4 opacity-40" />
                   </button>

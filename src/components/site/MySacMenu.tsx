@@ -1,13 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 import { openAccountEditProfile } from "./AccountEditProfile";
+import { openAccountInformation } from "./AccountInformation";
 import { cn } from "@/lib/utils";
 import { useProfilePhoto } from "@/lib/profile-photo";
 import { useHasCommunityProfile } from "@/lib/community-profile";
 
-export type Row = { label: string; to?: string; tab?: string; community?: boolean };
+export type Row = { label: string; to?: string; tab?: string; community?: boolean; accountInfo?: boolean };
 export const sections: { title: string; rows: Row[] }[] = [
-  { title: "Account", rows: [{ label: "Account Information" }] },
+  { title: "Account", rows: [{ label: "Account Information", accountInfo: true }] },
   {
     title: "My SAC",
     rows: [
@@ -91,6 +92,10 @@ export function MySacMenu({ open, onClose, hue, top }: { open: boolean; onClose:
                 <Link key={r.label} to={r.to} search={({ tab: r.tab }) as never} onClick={onClose} className={rowCls}>
                   {r.label}
                 </Link>
+              ) : r.accountInfo ? (
+                <button key={r.label} type="button" onClick={() => { onClose(); openAccountInformation(); }} className={cn(rowCls, "w-full text-left")}>
+                  {r.label}
+                </button>
               ) : (
                 <button key={r.label} type="button" className={cn(rowCls, "w-full text-left")}>
                   {r.label}

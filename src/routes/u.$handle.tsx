@@ -1,12 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { cropImageFile, saveProfilePhoto, useProfilePhoto } from "@/lib/profile-photo";
 import { Ban, Flag, Link2, ShieldOff, Bookmark, Clapperboard, Grid3x3, Images, MoreVertical, Plus, Repeat2, Share2, Ticket } from "lucide-react";
 import "@/components/explore/explore.css";
 import { BadgesFor } from "@/components/explore/CategoryBadges";
 import { Avatar, ResponsiveOverlay } from "@/components/explore/shared";
 import { StoryViewer } from "@/components/explore/Viewers";
-import { Input } from "@/components/ui/input";
+import { openAccountEditProfile } from "@/components/site/AccountEditProfile";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { YOU, exploreCatalog, findProfile, type ExploreItem, type ExploreProfile, type ExploreStory } from "@/lib/explore-data";
@@ -33,7 +32,7 @@ export const Route = createFileRoute("/u/$handle")({
 
 type ListKind = "followers" | "following";
 
-type ProfileEdits = { username: string; fullName: string; bio: string };
+type ProfileEdits = { username: string; fullName: string; bio: string; location: string };
 const EDIT_KEY = "sac-profile-edit";
 
 function loadProfileEdits(): Partial<ProfileEdits> {
@@ -180,10 +179,6 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
   const [create, setCreate] = useState(false);
   const [compose, setCompose] = useState<"Post" | "Reel" | "Story" | null>(null);
   const my = useMyContent();
-  const [editOpen, setEditOpen] = useState(false);
-  const [photoDraft, setPhotoDraft] = useState<string | null | undefined>(undefined);
-  const fileRef = useRef<HTMLInputElement>(null);
-  const myPhoto = useProfilePhoto();
   const mod = useMod();
   const [blockOpen, setBlockOpen] = useState(false);
   const [reportOpen, setReportOpen] = useState(false);
@@ -206,7 +201,7 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
   const navigate = Route.useNavigate();
   useEffect(() => {
     if (!isYou || !wantEdit || window.matchMedia("(min-width: 640px)").matches !== desktop) return;
-    setEditOpen(true);
+    openAccountEditProfile();
     void navigate({ search: {}, replace: true, resetScroll: false });
   }, [isYou, wantEdit, desktop, navigate]);
   const myStoryEntries = my.stories.filter((s) => s.expiresAt > Date.now()).map((story) => ({ story, profile: YOU }));
@@ -217,7 +212,8 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
     ...(isYou && edits.username ? { username: edits.username } : null),
     ...(isYou && edits.fullName ? { fullName: edits.fullName } : null),
     bio: isYou ? edits.bio : undefined,
-  } as ExploreProfile & { bio?: string };
+    location: isYou ? edits.location : undefined,
+  } as ExploreProfile & { bio?: string; location?: string };
   const savedItems = exploreCatalog.filter((i) => saved.includes(`explore:${i.id}`));
   const allPosts = isYou ? [...my.items, ...posts.filter((p) => !my.items.some((m) => m.id === p.id))] : posts;
   const reposted = repostsOf(isYou ? "you" : profile.id, st);
@@ -286,10 +282,11 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
             </div>
             {statusChip}
             {view.bio && <p className="mt-2.5 max-w-md text-[13px] leading-snug text-ink-foreground/80">{view.bio}</p>}
+            {view.location && <p className="mt-1 truncate text-[12px] text-ink-muted">{view.location}</p>}
             {isYou ? (
               <div className="mt-3 flex gap-2">
                 <button onClick={() => setCreate(true)} className="flex h-9 items-center gap-1.5 rounded-lg bg-ink-soft px-5 text-[13px] font-semibold hover:opacity-80"><Plus className="h-4 w-4" /> Create</button>
-                <button onClick={() => setEditOpen(true)} className="flex h-9 items-center justify-center rounded-lg bg-ink-soft px-5 text-[13px] font-semibold hover:opacity-80">Edit profile</button>
+                <button onClick={() => openAccountEditProfile()} className="flex h-9 items-center justify-center rounded-lg bg-ink-soft px-5 text-[13px] font-semibold hover:opacity-80">Edit profile</button>
               </div>
             ) : blocked ? null : (
               <button onClick={() => void toggleFollow(profile.id)} aria-pressed={on} className={cn("mt-3 h-9 rounded-lg px-6 text-[13px] font-semibold", on ? "bg-ink-soft" : "bg-primary text-primary-foreground")}>
@@ -323,6 +320,7 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
           <p className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.08em] text-ink-muted">{isYou ? "SAC member" : profile.type}</p>
           {statusChip}
           {view.bio && <p className="mt-1.5 line-clamp-3 text-[12.5px] leading-snug text-ink-foreground/80">{view.bio}</p>}
+          {view.location && <p className="mt-1 truncate text-[12px] text-ink-muted">{view.location}</p>}
         </div>
 
         {isYou ? (
@@ -330,7 +328,7 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
             <button onClick={() => setCreate(true)} className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-ink-soft text-[12px] font-semibold hover:opacity-80">
               <Plus className="h-4 w-4" /> Create
             </button>
-            <button onClick={() => setEditOpen(true)} className="h-10 rounded-lg bg-ink-soft text-[12px] font-semibold hover:opacity-80">
+            <button onClick={() => openAccountEditProfile()} className="h-10 rounded-lg bg-ink-soft text-[12px] font-semibold hover:opacity-80">
               Edit profile
             </button>
           </div>
@@ -437,89 +435,6 @@ function MobileProfile({ profile, isYou, posts, followerCount, followingCount, o
 
       {compose && <CreateComposer kind={compose} onClose={() => setCompose(null)} />}
 
-      <ResponsiveOverlay open={editOpen} onOpenChange={(o) => { setEditOpen(o); if (!o) setPhotoDraft(undefined); }} title="Edit profile">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            const data = new FormData(e.currentTarget);
-            const username = String(data.get("username") ?? "").trim().replace(/^@/, "").toLowerCase();
-            const fullName = String(data.get("fullName") ?? "").trim();
-            const bio = String(data.get("bio") ?? "").trim();
-            if (!username || !fullName) {
-              toast("Name and username are required");
-              return;
-            }
-            if (photoDraft !== undefined) {
-              try {
-                saveProfilePhoto(photoDraft);
-              } catch {
-                toast("Couldn't save the photo on this device");
-                return;
-              }
-            }
-            setPhotoDraft(undefined);
-            const next = { username, fullName, bio };
-            setEdits(next);
-            try {
-              localStorage.setItem(EDIT_KEY, JSON.stringify(next));
-            } catch {
-              /* storage full or blocked */
-            }
-            setEditOpen(false);
-            toast("Profile updated");
-          }}
-          className="p-4"
-        >
-          <h2 className="pb-3 text-center text-[15px] font-semibold">Edit profile</h2>
-          <div className="mb-4 flex flex-col items-center gap-2">
-            <Avatar self name={view.fullName} size={88} src={photoDraft === undefined ? undefined : photoDraft ?? ""} />
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (!file) return;
-                if (!file.type.startsWith("image/")) return toast("Please choose an image file");
-                try {
-                  setPhotoDraft(await cropImageFile(file));
-                } catch {
-                  toast("Could not read that image");
-                }
-              }}
-            />
-            <div className="flex items-center gap-3">
-              <button type="button" onClick={() => fileRef.current?.click()} className="text-[13px] font-semibold text-primary hover:opacity-80">
-                Change profile picture
-              </button>
-              {(photoDraft ?? (photoDraft === undefined ? myPhoto : null)) && (
-                <button type="button" onClick={() => setPhotoDraft(null)} className="text-[13px] text-ink-muted hover:opacity-80">
-                  Remove
-                </button>
-              )}
-            </div>
-            {photoDraft !== undefined && <p className="text-[11px] text-ink-muted">Preview — press Save to apply</p>}
-          </div>
-          <label className="block text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
-            Display name
-            <Input name="fullName" defaultValue={view.fullName} className="mt-1.5 h-10 text-[14px] font-normal normal-case tracking-normal" maxLength={40} />
-          </label>
-          <label className="mt-3 block text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
-            Username
-            <Input name="username" defaultValue={view.username} className="mt-1.5 h-10 text-[14px] font-normal normal-case tracking-normal" maxLength={30} />
-          </label>
-          <label className="mt-3 block text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
-            Bio
-            <Textarea name="bio" defaultValue={view.bio ?? ""} className="mt-1.5 min-h-20 text-[14px] font-normal normal-case tracking-normal" maxLength={160} placeholder="Tell people about yourself" />
-          </label>
-          <button type="submit" className="mt-4 h-9 w-full rounded-lg bg-primary text-[13px] font-bold uppercase tracking-[0.14em] text-primary-foreground">
-            Save
-          </button>
-          <p className="mt-2 text-center text-[12px] text-ink-muted">Changes are saved on this device and shown on your mobile profile.</p>
-        </form>
-      </ResponsiveOverlay>
     </div>
   );
 }

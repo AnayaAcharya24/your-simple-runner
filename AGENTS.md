@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Personal Edit Profile and Account Information are single global panels (src/components/site/AccountEditProfile.tsx, AccountInformation.tsx) mounted once in __root and opened via their open* functions — never duplicate them per page, so UI state never leaks into Explore/Community profiles.

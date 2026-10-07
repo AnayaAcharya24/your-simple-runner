@@ -22,7 +22,7 @@ function useOpen() {
   return useSyncExternalStore((cb) => { subs.add(cb); return () => subs.delete(cb); }, () => open, () => false);
 }
 
-type Edits = { username?: string; fullName?: string; bio?: string };
+type Edits = { username?: string; fullName?: string; bio?: string; location?: string };
 function load(): Edits {
   try { return JSON.parse(localStorage.getItem(EDIT_KEY) ?? "{}") as Edits; } catch { return {}; }
 }
@@ -45,17 +45,18 @@ export function AccountEditProfile() {
           const u = String(data.get("username") ?? "").trim().replace(/^@/, "").toLowerCase();
           const n = String(data.get("fullName") ?? "").trim();
           const bio = String(data.get("bio") ?? "").trim();
+          const location = String(data.get("location") ?? "").trim();
           if (!u || !n) return toast("Name and username are required");
           if (photoDraft !== undefined) {
             try { saveProfilePhoto(photoDraft); } catch { return toast("Couldn't save the photo on this device"); }
           }
           setPhotoDraft(undefined);
-          try { localStorage.setItem(EDIT_KEY, JSON.stringify({ username: u, fullName: n, bio })); } catch { /* storage blocked */ }
+          try { localStorage.setItem(EDIT_KEY, JSON.stringify({ username: u, fullName: n, bio, location })); } catch { /* storage blocked */ }
           window.dispatchEvent(new Event(PROFILE_EDIT_EVENT));
           setOpen(false);
           toast("Profile updated");
         }}
-        className="p-4"
+        className="max-h-[85dvh] overflow-y-auto p-4"
       >
         <h2 className="pb-3 text-center text-[15px] font-semibold">Edit profile</h2>
         <div className="mb-4 flex flex-col items-center gap-2">
@@ -95,7 +96,14 @@ export function AccountEditProfile() {
           Bio
           <Textarea name="bio" defaultValue={edits.bio ?? ""} className="mt-1.5 min-h-20 text-[14px] font-normal normal-case tracking-normal" maxLength={160} placeholder="Tell people about yourself" />
         </label>
-        <button type="submit" className="mt-4 h-9 w-full rounded-lg bg-primary text-[13px] font-bold uppercase tracking-[0.14em] text-primary-foreground">Save</button>
+        <label className="mt-3 block text-[12px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
+          Location
+          <Input name="location" defaultValue={edits.location ?? ""} className="mt-1.5 h-10 text-[14px] font-normal normal-case tracking-normal" maxLength={60} placeholder="City, State" />
+        </label>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => { setPhotoDraft(undefined); setOpen(false); }} className="h-9 rounded-lg border border-ink-border text-[13px] font-bold uppercase tracking-[0.14em] hover:opacity-80">Cancel</button>
+          <button type="submit" className="h-9 rounded-lg bg-primary text-[13px] font-bold uppercase tracking-[0.14em] text-primary-foreground">Save</button>
+        </div>
         <p className="mt-2 text-center text-[12px] text-ink-muted">Changes are saved on this device and shown on your mobile profile.</p>
       </form>
     </ResponsiveOverlay>
