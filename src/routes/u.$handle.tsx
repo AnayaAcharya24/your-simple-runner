@@ -1,13 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { cropImageFile, saveProfilePhoto, useProfilePhoto } from "@/lib/profile-photo";
 import { Ban, Flag, Link2, ShieldOff, Bookmark, Clapperboard, Grid3x3, Images, MoreVertical, Plus, Repeat2, Share2, Ticket } from "lucide-react";
 import "@/components/explore/explore.css";
 import { BadgesFor } from "@/components/explore/CategoryBadges";
 import { Avatar, ResponsiveOverlay } from "@/components/explore/shared";
 import { StoryViewer } from "@/components/explore/Viewers";
 import { openAccountEditProfile } from "@/components/site/AccountEditProfile";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { YOU, exploreCatalog, findProfile, type ExploreItem, type ExploreProfile, type ExploreStory } from "@/lib/explore-data";
