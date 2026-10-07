@@ -1,4 +1,5 @@
 import { AccountEditProfile } from "@/components/site/AccountEditProfile";
+import { AccountInformation } from "@/components/site/AccountInformation";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
@@ -138,6 +139,7 @@ function RootComponent() {
       </main>
       {!noFooter && <Footer />}
       <AccountEditProfile />
+      <AccountInformation />
     </QueryClientProvider>
   );
 }
